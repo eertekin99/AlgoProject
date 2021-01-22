@@ -1,0 +1,330 @@
+import time
+import networkx as nx
+import matplotlib.pyplot as plt
+import math
+import pylab
+from heapq import heappush, heappop, heapify
+
+
+def dijkstra(G, source, destination):
+    # This function calculates all adjacents for nodes
+    def adjacent(element):
+
+        list = []
+        # our element must be higher than 0, and max can be number of G
+        if element > 0 and element <= G:
+
+            # These if implementations comes from
+            # project document which |i-j|<=3 are adjacents
+            if element - 3 >= 1:
+                list.append(element - 3)
+            if element - 2 >= 1:
+                list.append(element - 2)
+            if element - 1 >= 1:
+                list.append(element - 1)
+            if element + 1 <= G:
+                list.append(element + 1)
+            if element + 2 <= G:
+                list.append(element + 2)
+            if element + 3 <= G:
+                list.append(element + 3)
+        return list
+
+    # This is relaxing operation for Dijkstra
+    def relax(v, d, adj):
+
+        for i in adj[v - 1]:
+            # d initiated with -1s. It is basically infinity.
+            if (d[i - 1] == -1) or (d[i - 1] > d[v - 1] + (v + i)):
+                d[i - 1] = d[v - 1] + (v + i)
+        return d
+
+    # It starts from destination
+    # and gets all lowest costed adjacent
+    # then find source at the end and returns reversed path
+    def path_calculate(des):
+
+        min1 = min(adj[des - 1])
+        max1 = max(adj[des - 1])
+
+        for i in (adj[des - 1]):
+
+            if source is i:
+                path.append(source)
+                found = True
+                return True
+
+        if source < min1:
+            path.append(min1)
+            des = min1
+            found = path_calculate(min1)
+
+        if max1 < source:
+            path.append(max1)
+            des = max1
+            found = path_calculate(max1)
+
+        if found:
+            return True
+
+    # it is initiated empty
+    S = []
+    # Q will have all nodes at the beginning
+    Q = []
+    # d keeps all costs calculated with source
+    d = [-1] * G
+    # adjacents for all nodes
+    adj = []
+    # shortest path
+    path = []
+
+    # path.append(source)
+    for i in range(1, G + 1):
+        adj.append(adjacent(i))
+
+        if i != source:
+            Q.append(i)
+
+    # heapify Q
+    heapify(Q)
+
+    # source's cost for reaching its neighbors'
+    d[source - 1] = 0
+    for nei in (adj[source - 1]):
+        d[nei - 1] = source + nei
+
+    # remove all items from Q until its empty
+    # push them into S
+    # Relaxing operations will occur
+    while len(Q) > 0:
+        removed = heappop(Q)
+        S.append(removed)
+        d = relax(removed, d, adj)
+        heapify(Q)
+
+    # path calculations
+    path.append(destination)
+    path_calculate(destination)
+    path.reverse()
+
+    # printing shortest path and it's cost
+    print("Shortest Path: ", path)
+    print("Cost: ", d[destination - 1])
+
+    return (adj, path, d)
+
+
+# Main
+if __name__ == "__main__":
+
+    # dijkstra(10, 1, 10)
+
+    # creating testing numbers
+    test_nums = [10, 50, 100, 200, 500, 1000, 2000]
+    times = []
+    theoretical = []
+
+    # test all node numbers
+    # gets actual running time
+    # theoretical running time calculated
+    for N in test_nums:
+        print("1 to %s" % N)
+        start_time = time.time()
+        adj, path, cost = dijkstra(N, 1, N)
+        end_time = time.time()
+
+        # number of edges
+        edgeNum = (24 + ((N - 6) * 6))
+
+        # theoretical time complexity
+        # there is an division operation to get proper graph with actual running time.
+        theoretical.append((N * N * math.log(N, 10)) / 200000000)
+
+        times.append((end_time - start_time))
+        print("Actual Running Time (seconds): ", (end_time - start_time))
+        print("------")
+        print("------")
+        print("------")
+
+########## RUNNING TIME AND THEORETICAL TIME
+
+fig = plt.figure()
+
+plt.plot(test_nums, times, marker='o', alpha=0.8, label="Actual Running Time")
+plt.plot(test_nums, theoretical, marker='o', alpha=0.4, label="Theoretical Running Time")
+
+fig.suptitle('Times', fontsize=24)
+plt.xlabel('Number of Nodes', fontsize=18)
+plt.ylabel('Times(sec.)', fontsize=16)
+# fig.set_size_inches(18.5, 10.5)
+plt.legend()
+plt.show()
+
+
+def draw(edgelist, pathlist, N):
+    G = nx.DiGraph()
+
+    for i in range(1, N + 1):
+        if (i % 2) == 0:
+            G.add_node(i, pos=(i, 0))
+        else:
+            G.add_node(i, pos=(i, 1))
+
+    pos = nx.get_node_attributes(G, 'pos')
+
+    G.add_edges_from(edgelist)
+
+    # Specify the edges you want here
+    red_edges = pathlist
+
+    edge_colours = ['black' if not edge in red_edges else 'red' for edge in G.edges()]
+
+    black_edges = [edge for edge in G.edges() if edge not in red_edges]
+
+    # Need to create a layout when doing
+    # separate calls to draw nodes and edges
+    # pos = nx.spring_layout(G)
+    nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'), node_color='yellow', node_size=500)
+    nx.draw_networkx_labels(G, pos)
+    nx.draw_networkx_edges(G, pos, edgelist=red_edges, edge_color='r', arrows=False)
+    nx.draw_networkx_edges(G, pos, edgelist=black_edges, arrows=False)
+    plt.show()
+
+
+def draw_them_consequently(N, source, destination):
+    adj, path, cost = dijkstra(N, source, destination)
+
+    edgelist = []
+    count = 0
+    for i in adj:
+        count = count + 1
+        for j in i:
+            edgelist.append((count, j))
+
+    pathlist = []
+    for i in range(len(path) - 1):
+        if i + 1 == len(path):
+            pathlist.append((path[i], path[i + 1]))
+            pathlist.append((path[i + 1], path[i]))
+            draw(edgelist, pathlist, N)
+            quit()
+        pathlist.append((path[i], path[i + 1]))
+        pathlist.append((path[i + 1], path[i]))
+        draw(edgelist, pathlist, N)
+
+    return (path, cost[destination-1])
+
+def draw_result(N, source, destination):
+    adj, path, cost = dijkstra(N, source, destination)
+
+    edgelist = []
+    count = 0
+    for i in adj:
+        count = count + 1
+        for j in i:
+            edgelist.append((count, j))
+
+    pathlist = []
+    for i in range(len(path) - 1):
+        if i + 1 == len(path):
+            pathlist.append((path[i], path[i + 1]))
+            pathlist.append((path[i + 1], path[i]))
+            quit()
+        pathlist.append((path[i], path[i + 1]))
+        pathlist.append((path[i + 1], path[i]))
+
+    draw(edgelist, pathlist, N)
+
+    return (path, cost[destination-1])
+
+
+# path, cost = draw_them_consequently(10, 1, 9)
+
+from tkinter import *
+from PIL import ImageTk,Image
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+
+root = Tk()
+root.geometry("600x600")
+root.title(" Dijkstra Shortest Path ")
+
+
+def combine_funcs(*funcs):
+    def combined_func(*args, **kwargs):
+        for f in funcs:
+            f(*args, **kwargs)
+
+    return combined_func
+
+
+def take_input():
+    INPUT = inputtxt.get("1.0", "end-1c")
+    INPUT1 = inputtxt1.get("1.0", "end-1c")
+    INPUT2 = inputtxt2.get("1.0", "end-1c")
+    INPUT = int(INPUT)
+    INPUT1 = int(INPUT1)
+    INPUT2 = int(INPUT2)
+    return (INPUT, INPUT1, INPUT2)
+
+def running():
+    (a, b, c) = take_input()
+    #path, cost = draw_them_consequently(a, b, c)
+    path, cost = draw_result(a, b, c)
+    str1 = ' -> '.join(str(e) for e in path)
+    str2 = str(cost)
+    lsum["text"] = "Shortest path= " + str1 + " ||| Cost= " + str2
+
+def running1():
+
+
+    (a, b, c) = take_input()
+
+    path, cost = draw_them_consequently(a, b, c)
+    #path, cost = draw_result(a, b, c)
+    str1 = ' -> '.join(str(e) for e in path)
+    str2 = str(cost)
+    lsum["text"] = "Path= " + str1 + " ||| Cost= " + str2
+
+
+
+l = Label(text="Number of Nodes")
+inputtxt = Text(root, height=1,
+                width=20,
+                bg="light yellow")
+
+l1 = Label(text="Source")
+inputtxt1 = Text(root, height=1,
+                 width=20,
+                 bg="light yellow")
+
+l2 = Label(text="Destination")
+inputtxt2 = Text(root, height=1,
+                 width=20,
+                 bg="light yellow")
+
+Display = Button(root, height=2,
+                 width=20,
+                 text="RESULT",
+                 command=lambda: running())
+
+Display1 = Button(root, height=2,
+                 width=20,
+                 text="SHOW ALL STEPS",
+                 command=lambda: running1())
+
+lsum = Label(height=2, width=100, text = 'SHORTEST PATH AND COST WILL BE PRINTED')
+
+l.pack()
+inputtxt.pack()
+l1.pack()
+inputtxt1.pack()
+l2.pack()
+inputtxt2.pack()
+Display.pack()
+Display1.pack()
+lsum.pack()
+
+mainloop()
+
+

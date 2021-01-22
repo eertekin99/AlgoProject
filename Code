@@ -163,24 +163,17 @@ plt.show()
 
 def draw(edgelist, pathlist, N):
     G = nx.DiGraph()
-
     for i in range(1, N + 1):
         if (i % 2) == 0:
             G.add_node(i, pos=(i, 0))
         else:
             G.add_node(i, pos=(i, 1))
-
     pos = nx.get_node_attributes(G, 'pos')
-
     G.add_edges_from(edgelist)
-
     # Specify the edges you want here
     red_edges = pathlist
-
     edge_colours = ['black' if not edge in red_edges else 'red' for edge in G.edges()]
-
     black_edges = [edge for edge in G.edges() if edge not in red_edges]
-
     # Need to create a layout when doing
     # separate calls to draw nodes and edges
     # pos = nx.spring_layout(G)
@@ -246,7 +239,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 
 root = Tk()
-root.geometry("600x600")
+root.geometry("600x300")
 root.title(" Dijkstra Shortest Path ")
 
 
@@ -275,8 +268,10 @@ def running():
     str2 = str(cost)
     lsum["text"] = "Shortest path= " + str1 + " ||| Cost= " + str2
 
-def running1():
+    plot(a, b, c)
 
+
+def running1():
 
     (a, b, c) = take_input()
 
@@ -285,6 +280,64 @@ def running1():
     str1 = ' -> '.join(str(e) for e in path)
     str2 = str(cost)
     lsum["text"] = "Path= " + str1 + " ||| Cost= " + str2
+
+
+
+def plot(a, b, c):
+
+    adj, path, cost = dijkstra(a, b, c)
+
+    edgelist = []
+    count = 0
+    for i in adj:
+        count = count + 1
+        for j in i:
+            edgelist.append((count, j))
+
+    pathlist = []
+    for i in range(len(path) - 1):
+        if i + 1 == len(path):
+            pathlist.append((path[i], path[i + 1]))
+            pathlist.append((path[i + 1], path[i]))
+            quit()
+        pathlist.append((path[i], path[i + 1]))
+        pathlist.append((path[i + 1], path[i]))
+
+
+    fig = plt.Figure(figsize=(5, 5), dpi=100)
+    deneme = fig.add_subplot(111)
+
+    G = nx.DiGraph()
+    for i in range(1, a + 1):
+        if (i % 2) == 0:
+            G.add_node(i, pos=(i, 0))
+        else:
+            G.add_node(i, pos=(i, 1))
+    pos = nx.get_node_attributes(G, 'pos')
+    G.add_edges_from(edgelist)
+    # Specify the edges you want here
+    red_edges = pathlist
+    edge_colours = ['black' if not edge in red_edges else 'red' for edge in G.edges()]
+    black_edges = [edge for edge in G.edges() if edge not in red_edges]
+
+    nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'), node_color='yellow', node_size=500, ax=deneme)
+    nx.draw_networkx_labels(G, pos, ax=deneme)
+    nx.draw_networkx_edges(G, pos, edgelist=red_edges, edge_color='r', arrows=False, ax=deneme)
+    nx.draw_networkx_edges(G, pos, edgelist=black_edges, arrows=False, ax=deneme)
+
+    deneme.plot()
+
+    window = Tk()
+    # creating the Tkinter canvas
+    # containing the Matplotlib figure
+
+    canvas = FigureCanvasTkAgg(fig, window)
+    canvas.draw()
+
+    # placing the canvas on the Tkinter window
+    canvas.get_tk_widget().pack()
+    plt.show()
+
 
 
 
@@ -309,8 +362,8 @@ Display = Button(root, height=2,
                  command=lambda: running())
 
 Display1 = Button(root, height=2,
-                 width=20,
-                 text="SHOW ALL STEPS",
+                 width=40,
+                 text="SHOW ALL STEPS (It is on console.)",
                  command=lambda: running1())
 
 lsum = Label(height=2, width=100, text = 'SHORTEST PATH AND COST WILL BE PRINTED')
@@ -326,5 +379,3 @@ Display1.pack()
 lsum.pack()
 
 mainloop()
-
-
